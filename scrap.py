@@ -1,4 +1,4 @@
-# main.py - Enhanced with FastMCP
+# main.py - SEO Analyzer with Business Context
 from fastapi import FastAPI, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -13,12 +13,11 @@ import json
 import time
 from typing import Dict, List, Optional
 import pathlib
-from mcp.server.fastmcp import FastMCP
 
-app = FastAPI(title="Professional SEO Analyzer with AI & FastMCP")
+app = FastAPI(title="Professional SEO Analyzer with AI & Business Context")
 
-# Initialize FastMCP for context management
-mcp = FastMCP("SEO_Analyzer_Context")
+# Initialize FastMCP for context management - removed for deployment
+# mcp = FastMCP("SEO_Analyzer_Context")
 
 # Create required directories if they don't exist
 os.makedirs("static", exist_ok=True)
@@ -42,8 +41,8 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
 }
 
-# FastMCP Tools for Context Analysis
-@mcp.tool()
+
+# FastMCP Tools for Context Analysis - converted to regular functions
 def analyze_content_context(content: str, max_length: int = 2000) -> Dict:
     """
     Analyze website content to extract key themes, topics, and context
@@ -51,26 +50,27 @@ def analyze_content_context(content: str, max_length: int = 2000) -> Dict:
     """
     # Clean content
     clean_content = ' '.join(content.split())[:max_length]
-    
+
     # Extract key information
     words = clean_content.lower().split()
     word_freq = {}
-    
+
     # Common words to ignore
-    stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'is', 'are', 'was', 'were', 'be', 'been', 'being'}
-    
+    stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'is', 'are', 'was',
+                  'were', 'be', 'been', 'being'}
+
     for word in words:
         word = re.sub(r'[^a-z0-9]', '', word)
         if len(word) > 3 and word not in stop_words:
             word_freq[word] = word_freq.get(word, 0) + 1
-    
+
     # Get top keywords
     top_keywords = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)[:10]
-    
+
     # Detect content type
     content_lower = clean_content.lower()
     content_type = "general"
-    
+
     if any(word in content_lower for word in ['shop', 'buy', 'product', 'price', 'cart', 'checkout']):
         content_type = "e-commerce"
     elif any(word in content_lower for word in ['blog', 'article', 'post', 'author', 'published']):
@@ -79,7 +79,7 @@ def analyze_content_context(content: str, max_length: int = 2000) -> Dict:
         content_type = "service"
     elif any(word in content_lower for word in ['portfolio', 'project', 'work', 'design']):
         content_type = "portfolio"
-    
+
     return {
         "keywords": [k[0] for k in top_keywords],
         "content_type": content_type,
@@ -88,7 +88,7 @@ def analyze_content_context(content: str, max_length: int = 2000) -> Dict:
         "preview": clean_content[:500]
     }
 
-@mcp.tool()
+
 def analyze_heading_structure(headings: Dict) -> Dict:
     """
     Analyze heading structure and hierarchy for SEO best practices
@@ -96,21 +96,21 @@ def analyze_heading_structure(headings: Dict) -> Dict:
     h1_count = len(headings.get('h1', []))
     h2_count = len(headings.get('h2', []))
     h3_count = len(headings.get('h3', []))
-    
+
     issues = []
     recommendations = []
-    
+
     if h1_count == 0:
         issues.append("No H1 tag found")
         recommendations.append("Add a single, descriptive H1 tag")
     elif h1_count > 1:
         issues.append(f"Multiple H1 tags found ({h1_count})")
         recommendations.append("Use only one H1 tag per page")
-    
+
     if h2_count == 0:
         issues.append("No H2 tags found")
         recommendations.append("Add H2 tags to structure your content")
-    
+
     hierarchy_score = 100
     if h1_count != 1:
         hierarchy_score -= 30
@@ -118,7 +118,7 @@ def analyze_heading_structure(headings: Dict) -> Dict:
         hierarchy_score -= 20
     if h3_count > h2_count * 3:
         hierarchy_score -= 10
-    
+
     return {
         "h1_count": h1_count,
         "h2_count": h2_count,
@@ -128,7 +128,7 @@ def analyze_heading_structure(headings: Dict) -> Dict:
         "hierarchy_score": max(0, hierarchy_score)
     }
 
-@mcp.tool()
+
 def analyze_meta_quality(title: str, description: str, url: str) -> Dict:
     """
     Analyze meta tags quality and provide specific recommendations
@@ -138,7 +138,7 @@ def analyze_meta_quality(title: str, description: str, url: str) -> Dict:
         "description": {},
         "url_structure": {}
     }
-    
+
     # Title analysis
     if not title:
         analysis["title"] = {
@@ -166,7 +166,7 @@ def analyze_meta_quality(title: str, description: str, url: str) -> Dict:
                 "issue": "Title length optimal",
                 "score": 100
             }
-    
+
     # Description analysis
     if not description:
         analysis["description"] = {
@@ -194,12 +194,12 @@ def analyze_meta_quality(title: str, description: str, url: str) -> Dict:
                 "issue": "Description length optimal",
                 "score": 100
             }
-    
+
     # URL structure
     url_lower = url.lower()
     url_score = 100
     url_issues = []
-    
+
     if '?' in url:
         url_issues.append("Contains query parameters")
         url_score -= 10
@@ -209,15 +209,15 @@ def analyze_meta_quality(title: str, description: str, url: str) -> Dict:
     if '_' in url:
         url_issues.append("Contains underscores (use hyphens)")
         url_score -= 10
-    
+
     analysis["url_structure"] = {
         "score": url_score,
         "issues": url_issues
     }
-    
+
     return analysis
 
-@mcp.tool()
+
 def generate_contextual_examples(
     content_context: Dict,
     element_type: str,
@@ -228,9 +228,9 @@ def generate_contextual_examples(
     """
     keywords = content_context.get('keywords', [])
     content_type = content_context.get('content_type', 'general')
-    
+
     examples = []
-    
+
     if element_type == "title":
         if content_type == "e-commerce":
             examples = [
@@ -256,7 +256,7 @@ def generate_contextual_examples(
                 f"Expert {keywords[0].title() if keywords else 'Business'} | Trusted Provider",
                 f"{keywords[0].title() if keywords else 'Your'} Solutions | Industry Leader"
             ]
-    
+
     elif element_type == "meta_description":
         if content_type == "e-commerce":
             examples = [
@@ -282,7 +282,7 @@ def generate_contextual_examples(
                 f"Your trusted partner for {keywords[0] if keywords else 'business success'}. Comprehensive services, experienced team, and customer-first approach.",
                 f"Excellence in {keywords[0] if keywords else 'service delivery'}. Industry expertise, innovative solutions, and commitment to your success."
             ]
-    
+
     elif element_type == "h1":
         if content_type == "e-commerce":
             examples = [
@@ -308,11 +308,11 @@ def generate_contextual_examples(
                 f"Expert {keywords[0].title() if keywords else 'Services'} | Quality You Can Trust",
                 f"{keywords[0].title() if keywords else 'Your'} Partner for Success"
             ]
-    
+
     # Ensure we always have 3 examples
     while len(examples) < 3:
         examples.append(f"Professional solution for {keywords[0] if keywords else 'your business'}")
-    
+
     return examples[:3]
 
 
@@ -323,44 +323,44 @@ def get_groq_recommendations(seo_data: Dict, business_context: Dict = None) -> D
     try:
         # Extract website content for context
         content_text = seo_data.get('content', {}).get('text', '')
-        
+
         # Use FastMCP to analyze content context
         content_context = analyze_content_context(content_text, max_length=2000)
-        
+
         # Use FastMCP to analyze heading structure
         heading_analysis = analyze_heading_structure(seo_data.get('headings', {}))
-        
+
         # Use FastMCP to analyze meta quality
         meta_analysis = analyze_meta_quality(
             seo_data.get('title', {}).get('content', ''),
             seo_data.get('meta_description', ''),
             seo_data.get('url', '')
         )
-        
+
         # Build enhanced context with FastMCP insights
         context = f"""
         Website URL: {seo_data.get('url', 'Unknown')}
-        
+
         FASTMCP CONTENT ANALYSIS:
         - Content Type: {content_context['content_type']}
         - Top Keywords: {', '.join(content_context['keywords'][:5])}
         - Word Count: {content_context['word_count']}
         - Content Preview: {content_context['preview']}
-        
+
         TITLE ANALYSIS (FastMCP Enhanced):
         - Current Title: {seo_data.get('title', {}).get('content', 'MISSING')}
         - Length: {seo_data.get('title', {}).get('length', 0)} characters
         - Status: {meta_analysis['title'].get('status', 'unknown')}
         - Issue: {meta_analysis['title'].get('issue', 'N/A')}
         - Score: {meta_analysis['title'].get('score', 0)}/100
-        
+
         META DESCRIPTION (FastMCP Enhanced):
         - Current: {seo_data.get('meta_description', 'MISSING')}
         - Length: {len(seo_data.get('meta_description', ''))} characters
         - Status: {meta_analysis['description'].get('status', 'unknown')}
         - Issue: {meta_analysis['description'].get('issue', 'N/A')}
         - Score: {meta_analysis['description'].get('score', 0)}/100
-        
+
         HEADING STRUCTURE (FastMCP Analysis):
         - H1 Tags: {heading_analysis['h1_count']} found
         - H2 Tags: {heading_analysis['h2_count']} found
@@ -368,16 +368,16 @@ def get_groq_recommendations(seo_data: Dict, business_context: Dict = None) -> D
         - H1 Content: {', '.join(seo_data.get('headings', {}).get('h1', [])) or 'NONE'}
         - Hierarchy Score: {heading_analysis['hierarchy_score']}/100
         - Issues: {', '.join(heading_analysis['issues']) if heading_analysis['issues'] else 'None'}
-        
+
         IMAGES:
         - Total Images: {seo_data.get('images', {}).get('total', 0)}
         - Without ALT tags: {seo_data.get('images', {}).get('without_alt', 0)}
-        
+
         LINKS:
         - Total: {seo_data.get('links', {}).get('total', 0)}
         - Internal: {seo_data.get('links', {}).get('internal', 0)}
         - External: {seo_data.get('links', {}).get('external', 0)}
-        
+
         TECHNICAL SEO:
         - Canonical URL: {'Present' if seo_data.get('canonical') else 'MISSING'}
         - Robots Meta: {seo_data.get('robots', 'MISSING')}
@@ -391,18 +391,18 @@ def get_groq_recommendations(seo_data: Dict, business_context: Dict = None) -> D
         title_examples = generate_contextual_examples(content_context, "title")
         desc_examples = generate_contextual_examples(content_context, "meta_description")
         h1_examples = generate_contextual_examples(content_context, "h1")
-        
+
         # Prepare enhanced prompt with FastMCP context
         prompt = f"""
         You are an expert SEO consultant with FastMCP-enhanced context analysis.
-        
+
         {context}
-        
+
         FASTMCP has already generated contextual examples based on deep content analysis:
         - Title Examples: {json.dumps(title_examples)}
         - Description Examples: {json.dumps(desc_examples)}
         - H1 Examples: {json.dumps(h1_examples)}
-        
+
         CRITICAL INSTRUCTIONS:
         1. Use the FastMCP content analysis to understand the website's topic and type
         2. Leverage the pre-generated contextual examples as reference
@@ -410,14 +410,14 @@ def get_groq_recommendations(seo_data: Dict, business_context: Dict = None) -> D
         4. For each recommendation, provide MINIMUM 3 DIFFERENT EXAMPLES
         5. Examples must be realistic and based on the content type: {content_context['content_type']}
         6. Prioritize issues by severity using FastMCP scores
-        
+
         For each issue found, provide:
         - parameter: The SEO element that needs improvement
         - issue: What's wrong (be specific with FastMCP scores and context)
         - recommendation: Detailed, actionable advice based on content type and keywords
         - examples: Array of at least 3 realistic examples (use FastMCP examples as inspiration)
         - priority: critical/high/medium/low (based on FastMCP scores)
-        
+
         Return ONLY valid JSON in this exact format:
         {{
             "recommendations": [
@@ -434,7 +434,7 @@ def get_groq_recommendations(seo_data: Dict, business_context: Dict = None) -> D
                 }}
             ]
         }}
-        
+
         Focus on the most impactful issues first (use FastMCP scores). Maximum 10 recommendations.
         Each recommendation MUST have at least 3 different examples tailored to the content type.
         """
@@ -466,7 +466,7 @@ def get_groq_recommendations(seo_data: Dict, business_context: Dict = None) -> D
                 response_text = json_match.group(1)
 
             recommendations = json.loads(response_text)
-            
+
             # Add FastMCP context to response
             recommendations['fastmcp_context'] = {
                 'content_type': content_context.get('content_type', 'general'),
@@ -475,7 +475,7 @@ def get_groq_recommendations(seo_data: Dict, business_context: Dict = None) -> D
                 'title_score': meta_analysis.get('title', {}).get('score', 0),
                 'description_score': meta_analysis.get('description', {}).get('score', 0)
             }
-            
+
             return recommendations
         except json.JSONDecodeError:
             # Fallback with FastMCP-generated examples
@@ -706,15 +706,15 @@ async def home(request: Request):
 
 @app.post("/analyze", response_class=HTMLResponse)
 async def analyze_website(
-    request: Request, 
-    url: str = Form(...),
-    # Business Context Fields
-    primary_goal: str = Form(None),
-    target_customer: str = Form(None),
-    price_position: str = Form(None),
-    geographic_focus: str = Form(None),
-    geographic_location: str = Form(None),
-    desired_action: str = Form(None)
+        request: Request,
+        url: str = Form(...),
+        # Business Context Fields
+        primary_goal: str = Form(None),
+        target_customer: str = Form(None),
+        price_position: str = Form(None),
+        geographic_focus: str = Form(None),
+        geographic_location: str = Form(None),
+        desired_action: str = Form(None)
 ):
     # Clean and validate URL
     if not url.startswith(('http://', 'https://')):
@@ -724,14 +724,16 @@ async def analyze_website(
     if not primary_goal or not target_customer or not price_position or not geographic_focus or not desired_action:
         return templates.TemplateResponse(
             "index.html",
-            {"request": request, "error": "Please answer all 5 business context questions to get accurate SEO recommendations."}
+            {"request": request,
+             "error": "Please answer all 5 business context questions to get accurate SEO recommendations."}
         )
-    
+
     # If hyper-local or regional, location is also required
     if geographic_focus in ['hyper_local', 'regional'] and not geographic_location:
         return templates.TemplateResponse(
             "index.html",
-            {"request": request, "error": "Please enter your location/city for hyper-local or regional geographic focus."}
+            {"request": request,
+             "error": "Please enter your location/city for hyper-local or regional geographic focus."}
         )
 
     try:
@@ -753,7 +755,7 @@ async def analyze_website(
             "geographic_location": geographic_location or "Not specified",
             "desired_action": desired_action or "Not specified"
         }
-        
+
         # Get FastMCP-enhanced recommendations from Groq API with business context
         recommendations = get_groq_recommendations(seo_data, business_context)
 
@@ -808,4 +810,5 @@ async def api_analyze_website(request: Request):
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)
